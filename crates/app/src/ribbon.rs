@@ -80,6 +80,7 @@ enum Action {
     Delete,
     Slice,
     Heal,
+    CleanUp,
     AutoHeal,
     OpenLibraryItem,
     ResumeLibraryEditors,
@@ -156,6 +157,7 @@ const CAPTURE: &[Group] = &[
             tool(Action::Delete, "Delete", Icon::Delete, "Delete selected items", "Del"),
             tool(Action::Slice, "Slice", Icon::Slice, "Slice selected wire", ""),
             tool(Action::Heal, "Heal", Icon::Heal, "Heal selected wires", ""),
+            tool(Action::CleanUp, "Clean Up Wires…", Icon::Heal, "Review and redraw selected wires around symbols and labels", ""),
             tool(Action::AutoHeal, "Auto-heal wires", Icon::Heal, "Auto-heal wires", ""),
         ],
     },
@@ -232,6 +234,7 @@ impl Action {
                 | Self::Delete
                 | Self::Slice
                 | Self::Heal
+                | Self::CleanUp
                 | Self::AutoHeal
                 | Self::Sync
                 | Self::Copy
@@ -303,6 +306,11 @@ impl Action {
                         || app.views.active.schematic.selection.single_net_label().is_some())
             }
             Self::Slice => schematic && app.views.active.schematic.selected_leg.as_ref().is_some_and(|leg| leg.split.is_some()),
+            Self::CleanUp => {
+                schematic
+                    && app.views.active.schematic.tool.is_none()
+                    && crate::wire_cleanup::selects_only_wires(&app.views.active.schematic.selection)
+            }
             Self::Heal => {
                 schematic
                     && !app.views.active.schematic.selection.wires.is_empty()
@@ -455,6 +463,7 @@ impl PcbApp {
                     self.select(Selection::default());
                 }
             }
+            Action::CleanUp => self.begin_wire_cleanup(),
             Action::AutoHeal => self.preferences.auto_heal_wires = !self.preferences.auto_heal_wires,
             _ => {}
         }

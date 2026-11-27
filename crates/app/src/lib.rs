@@ -83,6 +83,7 @@ mod sheet_split;
 mod ui_automation;
 mod unsaved;
 mod window_commands;
+mod wire_cleanup;
 mod workspace_panels;
 
 use editor_view::{EditorView, ViewId, ViewInput, Workspace};
@@ -260,6 +261,8 @@ enum Dialog {
     Sheet(sheet_editing::Edit),
     Hierarchy(hierarchy::Edit),
     SplitSheet(Box<sheet_split::Edit>),
+    /// A captured before/after review of rerouting the selected schematic wires.
+    WireCleanup(Box<wire_cleanup::Edit>),
     NetLabel(Box<net_labels::Edit>),
     /// Chooses and pins a package independently of board placement.
     Footprint(Box<footprint_assignment::Edit>),
@@ -894,7 +897,8 @@ impl PcbApp {
     /// Run a wire menu row through the shared commands at the revision the menu opened on, so an
     /// edit made meanwhile (by an agent, say) makes it fail visibly instead of hitting the wrong
     /// leg. A successful edit clears the selection, whose wire may no longer exist. Select Wire
-    /// only widens the local selection and is ignored if its captured revision is stale.
+    /// only widens the local selection and Clean Up only opens its review; both are ignored
+    /// if their captured revision is stale.
     fn edit_wire(&mut self, action: schematic_canvas::WireAction, leg: &schematic_canvas::LegTarget) {
         use schematic_canvas::WireAction;
         let (command, at) = match action {
@@ -902,6 +906,12 @@ impl PcbApp {
                 self.run(pcbcraft_engine::HEAL_WIRES, &json!({"items":Selection::one_wire(leg.wire.clone()),"expected_revision":leg.revision}));
                 if self.message.is_none() {
                     self.select(Selection::default());
+                }
+                return;
+            }
+            WireAction::CleanUp => {
+                if leg.revision == self.session.revision() {
+                    self.begin_wire_cleanup_with_items(Selection::one_wire(leg.wire.clone()));
                 }
                 return;
             }
@@ -2550,6 +2560,7 @@ impl PcbApp {
             Dialog::Sheet(edit) => self.sheet_dialog(ctx, edit),
             Dialog::Hierarchy(edit) => self.hierarchy_dialog(ctx, edit),
             Dialog::SplitSheet(edit) => self.split_sheet_dialog(ctx, edit),
+            Dialog::WireCleanup(edit) => self.wire_cleanup_dialog(ctx, edit),
             Dialog::NetLabel(edit) => self.net_label_dialog(ctx, *edit),
             Dialog::SaveChanges(then) => self.save_changes_dialog(ctx, then),
             Dialog::OpenLocation => {

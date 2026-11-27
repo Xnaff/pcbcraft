@@ -6,9 +6,7 @@ pub(crate) use overlaps::Cache as OverlapCache;
 mod selection;
 mod tool_menu;
 pub(crate) use tool_menu::Action as ToolAction;
-#[cfg(not(target_arch = "wasm32"))]
 mod thumbnail;
-#[cfg(not(target_arch = "wasm32"))]
 pub(crate) use thumbnail::Thumbnail;
 mod wires;
 pub(crate) use selection::BoxDrag;
@@ -233,6 +231,8 @@ pub(crate) fn paint_preview_transformed(
 pub(crate) enum WireAction {
     /// Normalize selected wire geometry and exact pin contacts.
     Heal,
+    /// Open the cleanup review for this wire.
+    CleanUp,
     /// Split the wire at the grid point under the click, keeping it connected (KiCad's Slice).
     Slice,
     /// Detach the leg under the click from neighboring legs, pins and shared junctions.
@@ -1173,6 +1173,7 @@ fn wire_menu(ui: &mut Ui, painter: &Painter, rect: Rect, camera: &Camera, leg: w
         (MenuItem::new("Slice").enabled(leg.split.is_some()), WireAction::Slice),
         (MenuItem::new("Break").enabled(leg.breakable), WireAction::Break),
         (MenuItem::new("Heal Wire"), WireAction::Heal),
+        (MenuItem::new("Clean Up Wire…"), WireAction::CleanUp),
         (MenuItem::new("Delete Segment").shortcut("Del"), WireAction::DeleteSegment),
         (MenuItem::new("Delete Wire"), WireAction::Delete),
         (MenuItem::new("Select Wire"), WireAction::SelectWire),

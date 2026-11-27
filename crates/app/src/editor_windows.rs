@@ -494,6 +494,9 @@ impl PcbApp {
             Dialog::SplitSheet(edit) => {
                 self.views.bind(edit.source.view());
             }
+            Dialog::WireCleanup(edit) => {
+                self.views.bind(edit.source.view());
+            }
             _ => {}
         }
         self.dialogs(ctx);

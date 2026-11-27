@@ -1,5 +1,6 @@
-//! A compact, read-only schematic view for Home. It reuses the canvas symbol painter and
-//! engine wire paths; egui remains the renderer, with no second rasterizer or graphics device.
+//! A compact, read-only schematic view for Home and for before/after reviews. It reuses the
+//! canvas symbol painter and engine wire paths; egui remains the renderer, with no second
+//! rasterizer or graphics device.
 
 use super::*;
 
@@ -113,13 +114,38 @@ impl Thumbnail {
     /// Fit saved geometry and paper in the card using the resolved personal appearance, like
     /// the canvas. Canvas labels follow
     /// the existing zoom threshold; library strokes, rotations and wire corners use the same data.
+    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) fn paint(&self, painter: &Painter, rect: Rect, appearance: pcbcraft_chrome::paper::Appearance) {
+        self.paint_frame(painter, rect, appearance, self.bounds, &[]);
+    }
+
+    /// Fit only the box around `focus` instead of the whole drawing, and stroke the
+    /// `emphasized` routes on top in the accent colour. Two previews given the same focus
+    /// frame the same region, so their drawings can be compared side by side. Without focus
+    /// points the whole drawing is shown.
+    pub(crate) fn paint_focused(
+        &self,
+        painter: &Painter,
+        rect: Rect,
+        appearance: pcbcraft_chrome::paper::Appearance,
+        focus: &[Point],
+        emphasized: &[Vec<Point>],
+    ) {
+        /// Grid steps of surroundings kept around the focus points.
+        const CONTEXT: f32 = 3.0;
+        let frame = focus.iter().fold(Rect::NOTHING, |frame, point| frame.union(Rect::from_pos(grid_pos(*point))));
+        let frame = if frame.is_finite() { frame.expand(CONTEXT) } else { self.bounds };
+        self.paint_frame(painter, rect, appearance, frame, emphasized);
+    }
+
+    /// Paint the part of the drawing inside `frame`, in grid steps, fitted to `rect`.
+    fn paint_frame(&self, painter: &Painter, rect: Rect, appearance: pcbcraft_chrome::paper::Appearance, frame: Rect, emphasized: &[Vec<Point>]) {
         if self.is_empty() || !rect.is_positive() {
             return;
         }
         let t = Tokens::get();
         let target = rect.shrink(t.space_8);
-        let bounds = self.bounds.expand(theme::SCHEMATIC_FIT_MARGIN / theme::SCHEMATIC_GRID_SPACING);
+        let bounds = frame.expand(theme::SCHEMATIC_FIT_MARGIN / theme::SCHEMATIC_GRID_SPACING);
         let step = (target.width() / bounds.width()).min(target.height() / bounds.height()).min(theme::SCHEMATIC_PREVIEW_MAX_STEP);
         let screen = |point: Pos2| target.center() + (point - bounds.center()) * step;
         let painter = painter.with_clip_rect(painter.clip_rect().intersect(rect));
@@ -171,6 +197,12 @@ impl Thumbnail {
                 step,
                 t.text,
             );
+        }
+        for route in emphasized {
+            painter.add(egui::Shape::line(
+                route.iter().map(|point| screen(grid_pos(*point))).collect(),
+                Stroke::new(2.0 * theme::SCHEMATIC_PREVIEW_STROKE, t.accent),
+            ));
         }
     }
 }

@@ -351,8 +351,9 @@ to selected wires and connects old endpoints that exactly touch a pin; agents us
 initiating edit's undo step, and opening a file never performs cleanup. Ambiguous pin
 contacts, unsupported connections and overly complex edits are rejected as a whole. This
 local cleanup does not route around obstacles or resolve conflicting net names
-(named nets are separate work). Agents can redraw selected wires around symbols,
-labels and other wires with [wire cleanup](schematic/wire-cleanup.md).
+(named nets are separate work). **Clean Up Wires…** in
+the Modify menu redraws selected wires around symbols, labels and other wires after a
+before/after review; see [wire cleanup](schematic/wire-cleanup.md).
 
 ## Symbol properties and selection
 

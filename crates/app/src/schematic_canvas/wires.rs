@@ -551,7 +551,7 @@ pub(super) fn paint_leg_preview(painter: &Painter, rect: Rect, camera: &Camera, 
     match hovered {
         Some(super::WireAction::Delete) => paint_route(painter, rect, camera, target.route.clone(), tokens.error),
         Some(super::WireAction::SelectWire) => paint_route(painter, rect, camera, target.route.clone(), tokens.accent),
-        Some(super::WireAction::Heal) => paint_route(painter, rect, camera, target.route.clone(), tokens.accent),
+        Some(super::WireAction::Heal | super::WireAction::CleanUp) => paint_route(painter, rect, camera, target.route.clone(), tokens.accent),
         Some(super::WireAction::DeleteSegment) => paint_route(painter, rect, camera, leg, tokens.error),
         Some(super::WireAction::Slice) => {
             if let Some(point) = target.split {

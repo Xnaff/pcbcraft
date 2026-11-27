@@ -1,9 +1,22 @@
 # Wire cleanup
 
 Wire cleanup redraws selected schematic wires between the endpoints they already
-have. It is a command for agents and other MCP clients; the editor has no control
-for it yet ([#30](https://github.com/tangency-labs/pcbcraft/issues/30)). PCB tracks
-are not affected.
+have. The editor and MCP clients use the same routing and the same commands. PCB
+tracks are not affected.
+
+## In the editor
+
+1. Select one or more wires and nothing else.
+2. Choose **Clean Up Wires…** from the Modify group's menu, or right-click a wire
+   and choose **Clean Up Wire…** for that wire alone.
+3. Review the bend and crossing counts and the **Before** and **After** drawings.
+   Both drawings frame the same part of the sheet, with the redrawn wires
+   highlighted.
+4. Choose **Clean Up** to apply, or **Cancel** to leave the sheet as it is.
+
+Applying is one undo step and keeps the wires selected. When cleanup finds no
+better route, the review says so and offers no **Clean Up**. If the project or
+view changed while the review was open, choose **Clean Up Wires…** again.
 
 ## Commands
 
@@ -34,7 +47,7 @@ undo history unchanged.
 - Wire endpoints, junctions, wire IDs and every unselected wire. The netlist is
   unchanged.
 - Symbols, labels and sheet symbols never move. To keep a wire as drawn, leave it
-  out of the selection; there is no separate wire lock.
+  out of the selection; wires have no separate lock.
 
 ## How a route is chosen
 
@@ -58,5 +71,7 @@ gives the same result in the preview, the command and every client.
 - Routes have at most two bends. A connection that needs more keeps its drawing.
 - Label boxes use an estimated name width and ignore an authored text offset.
 - Hierarchical label text and symbol field text are not treated as obstacles.
+- The drawings in the review omit named-net labels and are left out for a sheet too
+  large to draw; the counts are still shown.
 - Crossings that need a symbol to move or a wire to become a label stay; the
   preview's `after.crossings` shows how many remain.

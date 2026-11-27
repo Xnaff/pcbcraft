@@ -68,15 +68,15 @@
   that logical net, with width shown as a percentage of the default stroke. The same commands
   are available through MCP.
 - Shared undo and headless MCP commands.
-- [Read-only `schematic.preview_wire_cleanup` and `schematic.clean_up_wires`](../schematic/wire-cleanup.md)
-  in the engine and live/headless MCP: selected wires are redrawn between their unchanged endpoints
-  around symbols, labels and other wires, with before/after bend, crossing and length totals and
-  one-step undo.
+- [Clean Up Wires…](../schematic/wire-cleanup.md) in the Modify menu and the wire context menu, with
+  before/after drawings and bend and crossing counts, and read-only `schematic.preview_wire_cleanup`
+  with `schematic.clean_up_wires` in the engine and live/headless MCP: selected wires are redrawn
+  between their unchanged endpoints around symbols, labels and other wires in one undo step.
 
 ### Remaining scope
 
-- An editor control and drawn before/after preview for wire cleanup, routes with more than two
-  bends and a per-wire lock: [#30](https://github.com/tangency-labs/pcbcraft/issues/30).
+- Wire cleanup tries routes with at most two bends, and wires have no lock of their own;
+  unselected wires stay fixed.
 - Ambiguous contacts and edits beyond healing's complexity limits are refused.
 - Loops with intermediate pins or branches are preserved.
 
