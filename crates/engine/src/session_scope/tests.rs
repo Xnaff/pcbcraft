@@ -103,6 +103,11 @@ fn catalog_reads_succeed_and_authoring_commands_are_refused() {
     editor.apply(net_classes::CREATE, &json!({"name":"Review class","rules":{},"expected_revision":editor.revision()})).unwrap();
     let class = editor.project().unwrap().net_classes().definitions[0].id;
     editor.apply(ADD_DRAWING, &json!({"layer":edge,"points":[{"x_nm":-20_000_000,"y_nm":-20_000_000},{"x_nm":20_000_000,"y_nm":-20_000_000},{"x_nm":20_000_000,"y_nm":20_000_000},{"x_nm":-20_000_000,"y_nm":20_000_000}],"closed":true,"expected_revision":editor.revision()})).unwrap();
+    // A free jogged wire far from the fixture's parts gives the cleanup preview work to report.
+    let far = |x: i64, y: i64| json!({"x_nm":x * crate::schematic::GRID_NM,"y_nm":y * crate::schematic::GRID_NM});
+    editor
+        .apply(crate::DRAW_WIRE, &json!({"from":far(100, 100),"to":far(110, 100),"bends":[far(104, 100),far(104, 102),far(106, 102),far(106, 100)],"auto_heal":false,"expected_revision":editor.revision()}))
+        .unwrap();
     let project = editor.snapshot().unwrap();
     let board = project.board_target().unwrap().board;
     let drawing = project.boards().next().unwrap().drawings()[0].id;
@@ -149,6 +154,9 @@ fn catalog_reads_succeed_and_authoring_commands_are_refused() {
             parameters::RESOLVE => json!({"text":"@project.Revision"}),
             annotation::PREVIEW => json!({"expected_revision":revision}),
             sheet_split::PREVIEW => json!({"items":{"symbols":[symbol.id()],"wires":[]},"name":"Split","expected_revision":revision}),
+            crate::wire::cleanup::PREVIEW => {
+                json!({"items":{"symbols":[],"wires":[project.wires().last().unwrap().id()]},"expected_revision":revision})
+            }
             PREVIEW_UPDATE => {
                 preview_and_cancel(
                     &mut reader,
@@ -237,6 +245,10 @@ fn catalog_reads_succeed_and_authoring_commands_are_refused() {
         if id == sheet_split::PREVIEW {
             assert_eq!(actual["split_preview"]["symbols"][0]["symbol"], json!(symbol.id()));
             assert_eq!(actual["split_preview"]["ports"], json!([]));
+        }
+        if id == crate::wire::cleanup::PREVIEW {
+            assert_eq!(actual["wire_cleanup"]["after"]["bends"], 0);
+            assert_eq!(actual["wire_cleanup"]["wires"].as_array().map(Vec::len), Some(1));
         }
         if id == sources::PREVIEW_PIN_REMAP {
             assert_eq!(actual["changes"][0]["after"], "7");

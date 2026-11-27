@@ -1818,6 +1818,31 @@ fn mcp_can_disable_automatic_healing_and_heal_later() {
     assert_eq!(undone["project"], looped["project"]);
 }
 
+/// MCP previews a wire cleanup without editing, applies the same routes and undoes them in
+/// one step.
+#[test]
+fn mcp_previews_and_applies_wire_cleanup() {
+    let mut server = server();
+    let (preview, clean) = (pcbcraft_engine::wire::cleanup::PREVIEW, pcbcraft_engine::wire::cleanup::CLEAN_UP);
+    assert_eq!(body(&call(&mut server, "describe_command", json!({"command":preview})))["params"]["required"], json!(["items"]));
+    assert_eq!(body(&call(&mut server, "describe_command", json!({"command":clean})))["params"]["required"], json!(["items", "expected_revision"]));
+    let start = body(&call(&mut server, "execute", json!({"command":"project.new","params":{"name":"Cleanup"}})));
+    let p = |x: i64, y: i64| json!({"x_nm":x*1_270_000,"y_nm":y*1_270_000});
+    let params = json!({"from":p(0,0),"to":p(10,0),"bends":[p(4,0),p(4,2),p(6,2),p(6,0)],"auto_heal":false,"expected_revision":start["revision"]});
+    let drawn = body(&call(&mut server, "execute", json!({"command":pcbcraft_engine::DRAW_WIRE,"params":params})));
+    let items = json!({"symbols":[],"wires":[drawn["project"]["schematic"]["wires"][0]["id"]]});
+    let report = body(&call(&mut server, "execute", json!({"command":preview,"params":{"items":items},"inspect":false})));
+    assert_eq!(report["revision"], drawn["revision"]);
+    assert_eq!(report["wire_cleanup"]["before"]["bends"], 4);
+    assert_eq!(report["wire_cleanup"]["after"], json!({"bends":0,"crossings":0,"length_nm":12_700_000}));
+    assert_eq!(report["wire_cleanup"]["wires"][0]["after"], json!([p(0, 0), p(10, 0)]));
+    assert_eq!(body(&call(&mut server, "inspect_project", json!({})))["project"], drawn["project"]);
+    let cleaned = body(&call(&mut server, "execute", json!({"command":clean,"params":{"items":items,"expected_revision":drawn["revision"]}})));
+    assert_eq!(cleaned["project"]["schematic"]["wires"][0]["bends"], json!([]));
+    let undone = body(&call(&mut server, "execute", json!({"command":"edit.undo","params":{}})));
+    assert_eq!(undone["project"], drawn["project"]);
+}
+
 /// MCP discovers the wire slice, break and segment deletion through the shared catalog and runs
 /// them: a slice keeps the route connected through a new junction, and deleting a leg leaves
 /// free ends.

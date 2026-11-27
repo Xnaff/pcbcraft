@@ -240,7 +240,7 @@ fn draw_symbol(sheet: &Project, page: &mut Drawing, symbol: &SymbolPlacement) ->
 
 /// Bound the posed body drawing without generated pin ink, as the canvas does for automatic
 /// field placement. An empty or zero-area drawing uses a two-grid square around the symbol center.
-fn body_bounds(symbol: &SymbolPlacement, drawing: &[Shape]) -> [Point; 2] {
+pub(crate) fn body_bounds(symbol: &SymbolPlacement, drawing: &[Shape]) -> [Point; 2] {
     let mut points = Vec::new();
     for shape in drawing {
         match shape {

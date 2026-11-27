@@ -1738,6 +1738,18 @@ const CATALOG: &[Command] = &[
         params: &[ITEMS, EXPECTED_REVISION],
     },
     Command {
+        id: wire::cleanup::PREVIEW,
+        title: "Preview Wire Cleanup",
+        summary: "Review rerouting the selected wires without editing: each rerouted wire with its route before and after, and the bend, crossing and length totals before and after. Endpoints, junctions and unselected wires stay fixed.",
+        params: &[ITEMS, Param { required: false, ..EXPECTED_REVISION }],
+    },
+    Command {
+        id: wire::cleanup::CLEAN_UP,
+        title: "Clean Up Selected Wires",
+        summary: "Reroute the selected wires between their unchanged endpoints as the preview reports: clear of symbols, labels and other wires' contacts, then the lowest weighted cost of crossings, bends and length. The netlist and unselected wires are unchanged. Undoable.",
+        params: &[ITEMS, EXPECTED_REVISION],
+    },
+    Command {
         id: ATTACH_JUNCTION,
         title: "Attach Junction",
         summary: "Move a free endpoint or junction onto a pin, junction or explicit wire/at target, connecting every attached route and healing overlaps. Undoable.",
@@ -3830,6 +3842,8 @@ impl Session {
             | annotation::APPLY
             | sheet_split::PREVIEW
             | sheet_split::SPLIT
+            | wire::cleanup::PREVIEW
+            | wire::cleanup::CLEAN_UP
             | PLACE_FOOTPRINT
             | ASSIGN_FOOTPRINT
             | INITIALIZE_UPDATE_BASELINE
@@ -4039,6 +4053,10 @@ impl Session {
         if id == sheet_split::PREVIEW {
             self.validate_project_command(id, params)?;
             return self.preview_split(params);
+        }
+        if id == wire::cleanup::PREVIEW {
+            self.validate_project_command(id, params)?;
+            return self.preview_wire_cleanup(params);
         }
         if id == sheets::page::LIST_TEMPLATES {
             check_params(command(id).ok_or_else(|| CommandError::Unknown(id.to_owned()))?, params)?;
@@ -4392,6 +4410,8 @@ impl Session {
                 | annotation::APPLY
                 | sheet_split::PREVIEW
                 | sheet_split::SPLIT
+                | wire::cleanup::PREVIEW
+                | wire::cleanup::CLEAN_UP
                 | PLACE_FOOTPRINT
                 | ASSIGN_FOOTPRINT
                 | INITIALIZE_UPDATE_BASELINE
@@ -4618,6 +4638,10 @@ impl Session {
                 self.preview_split(params)?;
             }
             sheet_split::SPLIT => self.split_sheet(params)?,
+            wire::cleanup::PREVIEW => {
+                self.preview_wire_cleanup(params)?;
+            }
+            wire::cleanup::CLEAN_UP => self.clean_up_wires(params)?,
             ASSIGN_FOOTPRINT => self.assign_footprint(params)?,
             INITIALIZE_UPDATE_BASELINE => self.initialize_update_baseline(params)?,
             PREVIEW_UPDATE => self.preview_board_update(params)?,

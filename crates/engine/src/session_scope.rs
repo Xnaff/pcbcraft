@@ -52,9 +52,9 @@ impl Session {
 /// These commands return data or manage only ephemeral review state. In particular, Copy
 /// returns data without setting a system clipboard. Export/publication preparation does
 /// not write files, and netlist comparison only reads the text it is given. Annotation
-/// preview keeps its proposal and Apply token only in the session; sheet split preview
-/// caches no proposal. Applying annotation, splitting a sheet, loading/removing library
-/// sources, and Cut are not reads.
+/// preview keeps its proposal and Apply token only in the session; sheet split and wire
+/// cleanup previews cache no proposal. Applying annotation, splitting a sheet, cleaning up
+/// wires, loading/removing library sources, and Cut are not reads.
 fn is_read_command(id: &str) -> bool {
     matches!(
         id,
@@ -68,6 +68,7 @@ fn is_read_command(id: &str) -> bool {
             | parameters::RESOLVE
             | annotation::PREVIEW
             | sheet_split::PREVIEW
+            | crate::wire::cleanup::PREVIEW
             | netlist::EXPORT_NETLIST
             | netlist::COMPARE_NETLIST
             | netlist::EXPORT_BOARD_NETLIST

@@ -12,6 +12,7 @@ use crate::{
     },
 };
 
+pub mod cleanup;
 mod heal;
 pub use heal::normalized_path;
 mod reshape;

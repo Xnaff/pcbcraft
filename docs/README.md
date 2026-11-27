@@ -42,6 +42,7 @@ before treating an older plan as implemented behavior.
 | Review reference designators | [Schematic annotation preview](schematic/annotation.md) |
 | Selection exchange and reuse | [Copy and paste](schematic/clipboard.md) |
 | Intentional unused connections | [No-connect markers](schematic/no-connect-markers.md) |
+| Redraw selected wires around obstacles | [Wire cleanup](schematic/wire-cleanup.md) |
 | Schematic-to-board review and airwires | [Single-board updates](pcb/single-board-update.md) · [Accepted board connections](pcb/board-ratsnest.md) |
 | Inspect individual pins and pads | [Per-view inspection selection](schematic/pin-pad-selection.md) |
 | Explicit via nets | [Placement, Properties and storage](pcb/via-net-assignments.md) |
